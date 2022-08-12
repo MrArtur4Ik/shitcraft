@@ -1,7 +1,9 @@
 #ShitCraft
 
 **Как скомпилировать и поиграть в этот говно крафт?**
+
 Легко и просто!
+
 Пишем в консоль:
 
     git clone https://github.com/MrArtur4Ik/shitcraft
