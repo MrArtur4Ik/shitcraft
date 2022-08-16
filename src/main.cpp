@@ -9,6 +9,7 @@ using namespace sf;
 Texture texture;
 Font font;
 Level level(64, 16, 64);
+RenderWindow window;
 bool running = true;
 bool mouseGrab = true;
 bool hasBreakBlock = false;
@@ -22,6 +23,7 @@ float pitch = 0;
 float rotateSpeed = 0.05;
 float moveSpeed = 0.005;
 float mousedx, mousedy = 0;
+float fov = 2;
 Vector3i placeBlock(0, 0, 0);
 Vector3i breakBlock(0, 0, 0);
 float oneTile = 1.f/16.f;
@@ -40,7 +42,7 @@ std::vector<FloatRect> textureRects = {FloatRect(oneTile, 0, oneTile, oneTile), 
 	FloatRect(oneTile*3, oneTile, oneTile, oneTile) //Гравий
 	};
 
-std::vector<string> debugInfo = {"FPS:", "X Y Z: 0 0 0", "Yaw Pitch:"};
+std::vector<string> debugInfo = {"FPS:", "X Y Z: 0 0 0", "Yaw Pitch:", "FOV:"};
 bool showDebug = false;
 
 Sprite selectedBlockSprite;
@@ -157,10 +159,10 @@ void getPlaceAndBreakBlock(){
 	oldX = (int) floor(startX);
 	oldY = (int) floor(startY);
 	oldZ = (int) floor(startZ);
-	while(distance < 35) {
-		startX += 0.1*sin(yaw/180*M_PI)*cos(pitch/180*M_PI); blockX = (int) floor(startX);
-		startY -= 0.1*sin(pitch/180*M_PI); blockY = (int) floor(startY);
-		startZ -= 0.1*cos(yaw/180*M_PI)*cos(pitch/180*M_PI); blockZ = (int) floor(startZ);
+	while(distance < 140) {
+		startX += 0.025*sin(yaw/180*M_PI)*cos(pitch/180*M_PI); blockX = (int) floor(startX);
+		startY -= 0.025*sin(pitch/180*M_PI); blockY = (int) floor(startY);
+		startZ -= 0.025*cos(yaw/180*M_PI)*cos(pitch/180*M_PI); blockZ = (int) floor(startZ);
 		if(level.getBlock(blockX, blockY, blockZ)){
 			breakBlock.x = blockX;
 			breakBlock.y = blockY;
@@ -183,22 +185,26 @@ void updateSelectedBlockSprite(){
 	selectedBlockSprite.setTextureRect(IntRect(size.x*rect.left, size.y*rect.top, size.x*rect.width, size.y*rect.height));
 }
 
+void applyFOV(){
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity(); //Без этой функции gluPerspective даст пустой экран + он должен выполняется перед ним обязательно
+	gluPerspective(fov, (float) window.getSize().x / (float) window.getSize().y, 0.001f, 1000);
+	glMatrixMode(GL_MODELVIEW);
+}
+
 int main() {
 	texture.loadFromFile("assets/terrain.png");
 	font.loadFromFile("assets/font.ttf");
 	ContextSettings settings;
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
-	RenderWindow window(VideoMode(1300, 700), "govnocraft copyright Artur Latipov", Style::Default, settings);
+	window.create(VideoMode(1300, 700), "govnocraft copyright Artur Latipov", Style::Default, settings);
 	window.setMouseCursorGrabbed(true);
 	window.setMouseCursorVisible(false);
 	window.setFramerateLimit(60);
 	window.setVerticalSyncEnabled(true);
 	glViewport(0, 0, window.getSize().x, window.getSize().y);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(46, (float) window.getSize().x / (float) window.getSize().y, 0.001f, 1000);
-	glMatrixMode(GL_MODELVIEW);
+	applyFOV();
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_TEXTURE_2D);
@@ -241,9 +247,9 @@ int main() {
 				running = false;
 			}
 			else if(event.type == Event::Resized){
-				//gluPerspective(46, (float) event.size.width / (float) event.size.height, 0.001f, 1000);
 				window.setView(View(Vector2f(event.size.width/2, event.size.height/2), Vector2f(event.size.width, event.size.height)));
 				glViewport(0, 0, event.size.width, event.size.height);
+				applyFOV();
 				cross.setPosition(window.getSize().x/2, window.getSize().y/2);
 			}
 			else if(event.type == Event::KeyPressed){
@@ -263,6 +269,14 @@ int main() {
 				}
 				if(event.key.code == Keyboard::F3){
 					showDebug = !showDebug;
+				}
+				if(event.key.code == Keyboard::N){
+					fov -= 0.01;
+					applyFOV();
+				}
+				if(event.key.code == Keyboard::M){
+					fov += 0.01;
+					applyFOV();
 				}
 			}else if(event.type == Event::MouseButtonPressed){
 				if(mouseGrab){
@@ -395,10 +409,11 @@ int main() {
 		window.draw(selectedBlockSprite);
 		window.draw(cross);
 		if(showDebug){
+			debugInfo[0] = "FPS: " + std::to_string((float)1/(dtime/(float)1000000));
+			debugInfo[1] = "X Y Z: " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z);
+			debugInfo[2] = "Yaw Pitch: " + std::to_string(yaw) + " " + std::to_string(pitch);
+			debugInfo[3] = "FOV: " + std::to_string(fov);
 			for(int i = 0; i < (int) debugInfo.size(); i++){
-				debugInfo[0] = "FPS: " + std::to_string((float)1/(dtime/(float)1000000));
-				debugInfo[1] = "X Y Z: " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z);
-				debugInfo[2] = "Yaw Pitch: " + std::to_string(yaw) + " " + std::to_string(pitch);
 				text.setPosition(5, 5+(text.getLocalBounds().height+2)*i);
 				text.setString(debugInfo.at(i));
 				window.draw(text);
