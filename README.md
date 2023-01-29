@@ -8,11 +8,12 @@
 
     git clone https://github.com/MrArtur4Ik/shitcraft
     cd shitcraft
-Перед компиляцией установите библиотеки SFML
 
 Дальше:
 
 ## Linux (Makefile g++):
+
+Перед компиляцией установите библиотеки SFML
 
 Для Debian/Ubuntu/Mint:
 
