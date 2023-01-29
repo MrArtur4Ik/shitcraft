@@ -24,6 +24,7 @@ float rotateSpeed = 0.05;
 float moveSpeed = 0.005;
 float mousedx, mousedy = 0;
 float fov = 2;
+bool night = false;
 Vector3i placeBlock(0, 0, 0);
 Vector3i breakBlock(0, 0, 0);
 float oneTile = 1.f/16.f;
@@ -65,36 +66,42 @@ void renderCube(int x=-0.5, int y=-0.5, int z=-0.5, bool front = true, bool back
 	//Front
 	glColor3f(0.9f, 0.9f, 0.9f);
 	if(front){
+	glNormal3f(0.f, 0.f, 1.f);
 	glTexCoord2f(l, t); glVertex3f(x, y+1, z+1);
 	glTexCoord2f(l, t+h); glVertex3f(x, y, z+1);
 	glTexCoord2f(l+w, t+h); glVertex3f(x+1, y, z+1);
 	glTexCoord2f(l+w, t); glVertex3f(x+1, y+1, z+1);}
 	//Back
 	if(back){
+	glNormal3f(0.f, 0.f, -1.f);
 	glTexCoord2f(l, t); glVertex3f(x+1, y+1, z);
 	glTexCoord2f(l, t+h); glVertex3f(x+1, y, z);
 	glTexCoord2f(l+w, t+h); glVertex3f(x, y, z);
 	glTexCoord2f(l+w, t); glVertex3f(x, y+1, z);}
 	//Left
 	if(left){
+	glNormal3f(-1.f, 0.f, 0.f);
 	glTexCoord2f(l, t); glVertex3f(x, y+1, z);
 	glTexCoord2f(l, t+h); glVertex3f(x, y, z);
 	glTexCoord2f(l+w, t+h); glVertex3f(x, y, z+1);
 	glTexCoord2f(l+w, t); glVertex3f(x, y+1, z+1);}
 	//Right
 	if(right){
+	glNormal3f(1.f, 0.f, 0.f);
 	glTexCoord2f(l, t); glVertex3f(x+1, y+1, z+1);
 	glTexCoord2f(l, t+h); glVertex3f(x+1, y, z+1);
 	glTexCoord2f(l+w, t+h); glVertex3f(x+1, y, z);
 	glTexCoord2f(l+w, t); glVertex3f(x+1, y+1, z);}
 	//Up
 	if(up){
+	glNormal3f(0.f, 1.f, 0.f);
 	glTexCoord2f(l, t); glVertex3f(x, y+1, z);
 	glTexCoord2f(l, t+h); glVertex3f(x, y+1, z+1);
 	glTexCoord2f(l+w, t+h); glVertex3f(x+1, y+1, z+1);
 	glTexCoord2f(l+w, t); glVertex3f(x+1, y+1, z);}
 	//Down
 	if(down){
+	glNormal3f(0.f, -1.f, 0.f);
 	glTexCoord2f(l, t); glVertex3f(x+1, y, z+1);
 	glTexCoord2f(l, t+h); glVertex3f(x, y, z+1);
 	glTexCoord2f(l+w, t+h); glVertex3f(x, y, z);
@@ -217,6 +224,18 @@ int main() {
 	glFogf(GL_FOG_END, 40.0f);
 	GLfloat fogColor[4] = {0, 0.5f, 1.f, 1.f};
 	glFogfv(GL_FOG_COLOR, fogColor);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);
+	glEnable(GL_COLOR_MATERIAL);
+	//Свет
+	GLfloat lpos[] = {-0.9f, 1.f, -0.9f, 0.f}; //1-ый свет сверху
+	GLfloat lpos1[] = {0.9f, 1.f, 0.9f, 0.f}; //2-ой свет сверху
+	GLfloat lpos2[] = {0.f, -1.f, 0.f, 0.f}; //Свет снизу
+	GLfloat diffuse[] = {1.0, 1.0, 1.0, 1.0}; //Интенсивность сверху
+	GLfloat diffuse2[] = {0.4f, 0.4f, 0.4f, 1.0}; //Интенсивность света снизу
+	//glEnable(GL_NORMALIZE);
 	Texture::bind(&texture);
 	//Создание платформы
 	for(int i = 0; i < level.getWidth(); i++){
@@ -273,6 +292,9 @@ int main() {
 				if(event.key.code == Keyboard::N){
 					fov -= 0.01;
 					applyFOV();
+				}
+				if(event.key.code == Keyboard::P){
+					night = !night;
 				}
 				if(event.key.code == Keyboard::M){
 					fov += 0.01;
@@ -346,13 +368,21 @@ int main() {
 				pitch = pitch - (pitch + 90);
 			}
 		}
-		glClearColor(0, 0.5f, 1.f, 1.f);
+		if(!night){ glClearColor(0, 0.5f, 1.f, 1.f); } else { glClearColor(0, 0.f, 0.f, 1.f); }
+		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		//glLoadIdentity();
 		glPushMatrix();
 		glRotatef(pitch, 1, 0, 0); //Pitch
 		glRotatef(yaw, 0, 1, 0); //Yaw
 		glTranslatef(-x, -y, -z); //Координаты игрока
+		//Diffuse
+		glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, diffuse2);
+		//Position
+		glLightfv(GL_LIGHT0, GL_POSITION, lpos);
+		glLightfv(GL_LIGHT1, GL_POSITION, lpos1);
+		glLightfv(GL_LIGHT2, GL_POSITION, lpos2);
 		//Texture::bind(&texture);
 		for(int i = ((int) floor(x))-blockRenderRadius; i < ((int) floor(x))+blockRenderRadius; i++){
 			for(int j = ((int) floor(y))-blockRenderRadius; j < ((int) floor(y))+blockRenderRadius; j++){
