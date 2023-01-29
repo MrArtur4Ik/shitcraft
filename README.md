@@ -10,6 +10,10 @@
     cd shitcraft
 Перед компиляцией установите библиотеки SFML
 
+Дальше:
+
+##Linux (Makefile g++):
+
 Для Debian/Ubuntu/Mint:
 
     apt install libsfml-dev
@@ -17,10 +21,12 @@
 
     sudo pacman -Sy sfml
 
-Дальше:
+Компиляция:
 
+    cmake -G "Unix Makefiles"
     make
     cd bin
+
 И для запуска:
 
     chmod +x main
@@ -30,4 +36,8 @@
 
     chmod +x start
     ./start
+
+##Windows (Visual Studio):
+
+    скоро...
 
