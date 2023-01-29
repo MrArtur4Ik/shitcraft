@@ -1,4 +1,4 @@
-#ShitCraft
+# ShitCraft
 
 **Как скомпилировать и поиграть в этот говно крафт?**
 
@@ -12,7 +12,7 @@
 
 Дальше:
 
-##Linux (Makefile g++):
+## Linux (Makefile g++):
 
 Для Debian/Ubuntu/Mint:
 
@@ -37,7 +37,7 @@
     chmod +x start
     ./start
 
-##Windows (Visual Studio):
+## Windows (Visual Studio):
 
     скоро...
 
